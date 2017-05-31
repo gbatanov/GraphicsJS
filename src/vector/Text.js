@@ -1,6 +1,5 @@
 goog.provide('acgraph.vector.Text');
 goog.provide('acgraph.vector.Text.TextOverflow');
-goog.provide('acgraph.vector.Text.TextWrap');
 
 goog.require('acgraph.utils.HTMLParser');
 goog.require('acgraph.utils.IdGenerator');
@@ -209,7 +208,8 @@ acgraph.vector.Text = function(opt_x, opt_y) {
     'fontFamily': goog.global['acgraph']['fontFamily'],
     'direction': goog.global['acgraph']['textDirection'],
     'textOverflow': acgraph.vector.Text.TextOverflow.CLIP,
-    'textWrap': acgraph.vector.Text.TextWrap.NO_WRAP,
+    'wordBreak': 'normal',
+    'wordWrap': 'noWrap',
     'selectable': true,
     'hAlign': acgraph.vector.Text.HAlign.START
   });
@@ -226,28 +226,6 @@ goog.inherits(acgraph.vector.Text, acgraph.vector.Element);
 //  Enums
 //
 //----------------------------------------------------------------------------------------------------------------------
-
-
-/**
- * Text wrap mode.
- * @enum {string}
- */
-acgraph.vector.Text.TextWrap = {
-  /**
-   No wrap.
-   */
-  NO_WRAP: 'noWrap',
-  /**
-   Wrap by symbol.
-   */
-  BY_LETTER: 'byLetter',
-  /**
-   Wrap by word.
-   */
-  BY_WORD: 'byWord'
-};
-
-
 /**
  * Defines visibility in block, of text can't be shown in the area.
  * @enum {string}
@@ -741,12 +719,22 @@ acgraph.vector.Text.prototype.hAlign = function(opt_value) {
 
 
 /**
- Getter for text wrap of text.
- @param {(acgraph.vector.Text.TextWrap|string)=} opt_value .
- @return {acgraph.vector.Text.TextWrap|string|acgraph.vector.Text}
+ Getter for word break of text.
+ @param {string=} opt_value .
+ @return {string|acgraph.vector.Text}
  */
-acgraph.vector.Text.prototype.textWrap = function(opt_value) {
-  return /** @type {acgraph.vector.Text.TextWrap|acgraph.vector.Text} */ (this.setStyleProperty('textWrap', /** @type {string} */(opt_value)));
+acgraph.vector.Text.prototype.wordBreak = function(opt_value) {
+  return /** @type {string|acgraph.vector.Text} */ (this.setStyleProperty('wordBreak', /** @type {string} */(opt_value)));
+};
+
+
+/**
+ Getter for word wrap of text.
+ @param {string=} opt_value .
+ @return {string|acgraph.vector.Text}
+ */
+acgraph.vector.Text.prototype.wordWrap = function(opt_value) {
+  return /** @type {string|acgraph.vector.Text} */ (this.setStyleProperty('wordWrap', /** @type {string} */(opt_value)));
 };
 
 
@@ -1099,7 +1087,8 @@ acgraph.vector.Text.prototype.cutTextSegment_ = function(text, style, a, b, segm
   bounds.width = cutTextWidth;
   acgraph.getRenderer().textBounds(cutText, resultStatus, bounds);
 
-  if (this.style_['textWrap'] == acgraph.vector.Text.TextWrap.BY_WORD && !opt_ignoreByWord) {
+  if (this.style_['wordWrap'] == 'normal' && !opt_ignoreByWord) {
+  // if (this.style_['wordBreak'] != 'break-all' && !opt_ignoreByWord) {
     var anyWhiteSpace = /\s+/g;
     var anyNonWhiteSpace = /\S+/g;
 
@@ -1116,6 +1105,10 @@ acgraph.vector.Text.prototype.cutTextSegment_ = function(text, style, a, b, segm
       }
     }
   }
+
+  // if (this.style_['wordWrap'] == '') {
+  //
+  // }
 
   return pos;
 };
@@ -1315,7 +1308,7 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
   // define segment offset, we need it to make textIndent for the first line.
   var shift = this.segments_.length == 0 ? this.textIndent_ : 0;
 
-  // If text width and textWrap are set - start putting a segement into the given bounds.
+  // If text width and wordWrap are set - start putting a segement into the given bounds.
   if (goog.isDefAndNotNull(this.style_['width'])) {
     // if a new segment, with all segment already in place and offsets, doesnt' fit:
     // cut characters.
@@ -1338,8 +1331,8 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
 
       shift = 0;
 
-      if (this.style_['textWrap'] == acgraph.vector.Text.TextWrap.BY_LETTER ||
-          this.style_['textWrap'] == acgraph.vector.Text.TextWrap.BY_WORD) {
+      if (this.style_['wordWrap'] == 'byLetter' ||
+          this.style_['wordWrap'] == 'normal') {
         text = goog.string.trimLeft(text.substring(cutPos, text.length));
         segment_bounds = this.getTextBounds(text, style);
       } else {
@@ -1363,8 +1356,8 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
  * Finalizes text line.
  */
 acgraph.vector.Text.prototype.finalizeTextLine = function() {
-  var textWrap = this.textWrap();
-  if ((textWrap == acgraph.vector.Text.TextWrap.NO_WRAP) &&
+  var wordWrap = this.wordWrap();
+  if ((wordWrap == 'noWrap') &&
       (this.textLines_.length == 1) &&
       !this.htmlOn_ && !this.stopAddSegments_) {
     this.applyTextOverflow_();
@@ -1466,7 +1459,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
       }
     }
 
-    if (goog.isDefAndNotNull(this.style_['width']) && this.style_['textWrap'] == acgraph.vector.Text.TextWrap.BY_WORD &&
+    if (goog.isDefAndNotNull(this.style_['width']) && this.style_['wordWrap'] == 'normal' &&
         this.currentLineWidth_ > this.width_) {
       if (this.currentLine_.length > 1 && !this.currentLine_[0].text.length) {
         goog.array.removeAt(this.currentLine_, 0);
@@ -1791,12 +1784,9 @@ acgraph.vector.Text.prototype.disposeInternal = function() {
   proto['hAlign'] = proto.hAlign;
   proto['width'] = proto.width;
   proto['height'] = proto.height;
-  proto['textWrap'] = proto.textWrap;
+  proto['wordWrap'] = proto.wordWrap;
   proto['textOverflow'] = proto.textOverflow;
   proto['selectable'] = proto.selectable;
-  goog.exportSymbol('acgraph.vector.Text.TextWrap.NO_WRAP', acgraph.vector.Text.TextWrap.NO_WRAP);
-  goog.exportSymbol('acgraph.vector.Text.TextWrap.BY_LETTER', acgraph.vector.Text.TextWrap.BY_LETTER);
-  goog.exportSymbol('acgraph.vector.Text.TextWrap.BY_WORD', acgraph.vector.Text.TextWrap.BY_WORD);
   goog.exportSymbol('acgraph.vector.Text.TextOverflow.CLIP', acgraph.vector.Text.TextOverflow.CLIP);
   goog.exportSymbol('acgraph.vector.Text.TextOverflow.ELLIPSIS', acgraph.vector.Text.TextOverflow.ELLIPSIS);
   goog.exportSymbol('acgraph.vector.Text.FontStyle.ITALIC', acgraph.vector.Text.FontStyle.ITALIC);

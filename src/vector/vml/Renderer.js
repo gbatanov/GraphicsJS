@@ -318,7 +318,7 @@ acgraph.vector.vml.Renderer.prototype.measuringSimpleText = function(text, segme
   if (textStyle['letterSpacing']) goog.style.setStyle(this.measurementSimpleText_, 'letter-spacing', textStyle['letterSpacing']);
   if (textStyle['decoration']) goog.style.setStyle(this.measurementSimpleText_, 'text-decoration', textStyle['decoration']);
   if (textStyle['textIndent']) goog.style.setStyle(this.measurementSimpleText_, 'text-indent', textStyle['textIndent']);
-  if (textStyle['textWrap'] && textStyle['width'] && textStyle['textWrap'] == acgraph.vector.Text.TextWrap.BY_LETTER) {
+  if (textStyle['wordWrap'] && textStyle['width'] && textStyle['wordWrap'] == 'byLetter') {
     goog.style.setStyle(this.measurementSimpleText_, 'word-break', 'break-all');
   } else {
     goog.style.setStyle(this.measurementSimpleText_, 'white-space', 'nowrap');
@@ -1394,7 +1394,7 @@ acgraph.vector.vml.Renderer.prototype.setTextProperties = function(element) {
     if (element.textOverflow() == '') goog.style.setStyle(domElement, 'text-overflow', 'clip');
     if (element.direction()) goog.style.setStyle(domElement, 'direction', /** @type {string} */ (element.direction()));
 
-    if (element.textWrap() == acgraph.vector.Text.TextWrap.BY_LETTER && element.width()) {
+    if (element.wordWrap() == 'byLetter' && element.width()) {
       goog.style.setStyle(domElement, 'word-break', 'break-all');
       goog.style.setStyle(domElement, 'white-space', 'normal');
     } else {
