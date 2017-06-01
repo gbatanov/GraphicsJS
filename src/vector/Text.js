@@ -209,7 +209,7 @@ acgraph.vector.Text = function(opt_x, opt_y) {
     'direction': goog.global['acgraph']['textDirection'],
     'textOverflow': acgraph.vector.Text.TextOverflow.CLIP,
     'wordBreak': 'normal',
-    'wordWrap': 'noWrap',
+    'wordWrap': 'normal',
     'selectable': true,
     'hAlign': acgraph.vector.Text.HAlign.START
   });
@@ -1087,28 +1087,31 @@ acgraph.vector.Text.prototype.cutTextSegment_ = function(text, style, a, b, segm
   bounds.width = cutTextWidth;
   acgraph.getRenderer().textBounds(cutText, resultStatus, bounds);
 
-  if (this.style_['wordWrap'] == 'normal' && !opt_ignoreByWord) {
-  // if (this.style_['wordBreak'] != 'break-all' && !opt_ignoreByWord) {
+  var isWWBreak = this.style_['wordWrap'] == 'break-word';
+  var isWBCJK = this.style_['wordBreak'] == 'keep-all';
+  var isWBBreak = this.style_['wordBreak'] == 'break-all';
+
+  if (!isWBBreak && !opt_ignoreByWord) {
     var anyWhiteSpace = /\s+/g;
     var anyNonWhiteSpace = /\S+/g;
+    var cjkChar = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf\uAC00-\uD7A3\u1100–\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]+/g;
 
     var left = subWrappedText[subWrappedText.length - 1];
     var right = cutText[0];
 
-    if (!(anyWhiteSpace.test(left) || anyWhiteSpace.test(right))) {
+    var cjkCase = !isWBCJK && (cjkChar.test(left) || cjkChar.test(right));
+
+    if (!(anyWhiteSpace.test(left) || anyWhiteSpace.test(right) || cjkCase)) {
       if (anyWhiteSpace.test(subWrappedText)) {
         var words = subWrappedText.match(anyNonWhiteSpace);
         pos = subWrappedText.lastIndexOf(words[words.length - 1]);
       } else {
         var tt = anyNonWhiteSpace.exec(text)[0];
-        pos = tt.length;
+        if (!isWWBreak)
+          pos = tt.length;
       }
     }
   }
-
-  // if (this.style_['wordWrap'] == '') {
-  //
-  // }
 
   return pos;
 };
@@ -1331,19 +1334,19 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
 
       shift = 0;
 
-      if (this.style_['wordWrap'] == 'byLetter' ||
-          this.style_['wordWrap'] == 'normal') {
+      // if (this.style_['wordWrap'] == 'break-word' ||
+      //     this.style_['wordWrap'] == 'normal') {
         text = goog.string.trimLeft(text.substring(cutPos, text.length));
         segment_bounds = this.getTextBounds(text, style);
-      } else {
-        if (this.htmlOn_) {
-          text = '';
-          segment_bounds = this.getTextBounds(text, style);
-        } else {
-          this.applyTextOverflow_();
-          this.stopAddSegments_ = true;
-        }
-      }
+      // } else {
+      //   if (this.htmlOn_) {
+      //     text = '';
+      //     segment_bounds = this.getTextBounds(text, style);
+      //   } else {
+      //     this.applyTextOverflow_();
+      //     this.stopAddSegments_ = true;
+      //   }
+      // }
     }
   }
 
@@ -1785,6 +1788,7 @@ acgraph.vector.Text.prototype.disposeInternal = function() {
   proto['width'] = proto.width;
   proto['height'] = proto.height;
   proto['wordWrap'] = proto.wordWrap;
+  proto['wordBreak'] = proto.wordBreak;
   proto['textOverflow'] = proto.textOverflow;
   proto['selectable'] = proto.selectable;
   goog.exportSymbol('acgraph.vector.Text.TextOverflow.CLIP', acgraph.vector.Text.TextOverflow.CLIP);
