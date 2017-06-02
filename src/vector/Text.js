@@ -760,6 +760,20 @@ acgraph.vector.Text.prototype.selectable = function(opt_value) {
 
 
 /**
+ * Path for text.
+ * @param {acgraph.vector.Path=} opt_value .
+ * @return {acgraph.vector.Path|acgraph.vector.Text}
+ */
+acgraph.vector.Text.prototype.path = function(opt_value) {
+  if (goog.isDef(opt_value)) {
+    this.path_ = opt_value;
+    return this;
+  }
+  return this.path_;
+};
+
+
+/**
  Getter for style.
  @param {acgraph.vector.TextStyle=} opt_value Style.
  @return {acgraph.vector.TextStyle|acgraph.vector.Text} Style.
@@ -1311,14 +1325,17 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
   // define segment offset, we need it to make textIndent for the first line.
   var shift = this.segments_.length == 0 ? this.textIndent_ : 0;
 
+  var isWidth = this.path() || goog.isDefAndNotNull(this.style_['width']);
+  var width = this.path() ? this.path().getLength() : this.width_;
+
   // If text width and wordWrap are set - start putting a segement into the given bounds.
-  if (goog.isDefAndNotNull(this.style_['width'])) {
+  if (isWidth) {
     // if a new segment, with all segment already in place and offsets, doesnt' fit:
     // cut characters.
 
-    while ((this.currentLineWidth_ + segment_bounds.width + shift > this.width_) && !this.stopAddSegments_) {
+    while ((this.currentLineWidth_ + segment_bounds.width + shift > width) && !this.stopAddSegments_) {
       // calculate the position where to cut.
-      var cutPos = this.cutTextSegment_(text, style, shift + this.currentLineWidth_, this.width_, segment_bounds);
+      var cutPos = this.cutTextSegment_(text, style, shift + this.currentLineWidth_, width, segment_bounds);
 
       if (cutPos < 1 && (this.currentLine_.length == 0)) cutPos = 1;
       if (cutPos != 0) {
@@ -1462,8 +1479,9 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
       }
     }
 
-    if (goog.isDefAndNotNull(this.style_['width']) && this.style_['wordWrap'] == 'normal' &&
-        this.currentLineWidth_ > this.width_) {
+    var width = this.path() ? this.path().getLength() : this.width_;
+    if ((goog.isDefAndNotNull(this.style_['width']) || this.path()) && this.style_['wordWrap'] == 'normal' &&
+        this.currentLineWidth_ > width) {
       if (this.currentLine_.length > 1 && !this.currentLine_[0].text.length) {
         goog.array.removeAt(this.currentLine_, 0);
         var index = goog.array.indexOf(this.segments_, this.currentLine_[0]);
@@ -1473,7 +1491,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
       segment = goog.array.peek(this.currentLine_);
       var segment_bounds = this.getTextBounds(segment.text, segment.getStyle());
 
-      var cutPos = this.cutTextSegment_(segment.text, segment.getStyle(), 0, this.width_, segment_bounds, true);
+      var cutPos = this.cutTextSegment_(segment.text, segment.getStyle(), 0, width, segment_bounds, true);
       var cutText = segment.text.substring(0, cutPos);
       segment_bounds = this.getTextBounds(cutText, segment.getStyle());
       segment.text = cutText;
@@ -1486,7 +1504,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
 
       if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.CENTER) {
         segment = this.currentLine_[0];
-        segment.dx = -this.width_ / 2 + this.currentLineWidth_ / 2;
+        segment.dx = -width / 2 + this.currentLineWidth_ / 2;
       }
     }
 
@@ -1561,7 +1579,7 @@ acgraph.vector.Text.prototype.textDefragmentation = function() {
     this.text_ = goog.string.canonicalizeNewlines(goog.string.normalizeSpaces(this.text_));
     var textArr = this.text_.split(q);
 
-    if (textArr.length == 1 && !goog.isDefAndNotNull(this.style_['width'])) {
+    if (textArr.length == 1 && !goog.isDefAndNotNull(this.style_['width']) && !this.path()) {
       if (!this.domElement()) {
         this.createDom(true);
       }
@@ -1702,6 +1720,15 @@ acgraph.vector.Text.prototype.renderStyle = function() {
 acgraph.vector.Text.prototype.renderData = function() {
   if (this.domElement())
     goog.dom.removeChildren(this.domElement());
+
+  if (this.path_ && !this.textPath) {
+    this.textPath = acgraph.getRenderer().createTextPathElement();
+    acgraph.getRenderer().setTextPathProperties(this);
+    goog.dom.appendChild(this.domElement(), this.textPath);
+  } else {
+    goog.dom.removeNode(this.textPath);
+    this.textPath = null;
+  }
 
   for (var i = 0, len = this.segments_.length; i < len; i++) {
     this.segments_[i].renderData();

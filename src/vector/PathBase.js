@@ -1024,6 +1024,41 @@ acgraph.vector.PathBase.boundsCalculationMap_ = (function() {
 })();
 
 
+/**
+ * Path lenght.
+ * @return {number} .
+ */
+acgraph.vector.PathBase.prototype.getLength = function() {
+  var length = 0;
+  if (this.isEmpty()) return length;
+  var prevSegment = null;
+  /** @type {!Array.<string|number>} */
+  var list = [];
+  this.forEachSegment(function(segment, args) {
+    switch (segment) {
+      case acgraph.vector.PathBase.Segment.MOVETO:
+        acgraph.utils.partialApplyingArgsToFunction(Array.prototype.push, args, list);
+        break;
+      case acgraph.vector.PathBase.Segment.LINETO:
+        acgraph.utils.partialApplyingArgsToFunction(Array.prototype.push, args, list);
+        break;
+      case acgraph.vector.PathBase.Segment.CURVETO:
+        var params = goog.array.slice(list, list.length - 2);
+        for (var i = 0, len = args.length - 5; i < len; i += 6) {
+          Array.prototype.push.apply(params, goog.array.slice(args, i, i + 6));
+          length += acgraph.math.bezierCurveLength(params);
+          params = goog.array.slice(params, params.length - 2);
+        }
+        acgraph.utils.partialApplyingArgsToFunction(Array.prototype.push, args, list);
+        break;
+    }
+    prevSegment = segment;
+  });
+
+  return length;
+};
+
+
 // /**
 //  * Types of segment and functions to calculate bounds.
 //  * @type {!Array.<Function>}

@@ -607,6 +607,12 @@ acgraph.vector.svg.Renderer.prototype.createTextElement = function() {
 
 
 /** @inheritDoc */
+acgraph.vector.svg.Renderer.prototype.createTextPathElement = function() {
+  return this.createSVGElement_('textPath');
+};
+
+
+/** @inheritDoc */
 acgraph.vector.svg.Renderer.prototype.createTextSegmentElement = function() {
   return this.createSVGElement_('tspan');
 };
@@ -818,6 +824,31 @@ acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
     domElement.style['opacity'] = style['opacity'];
   else
     domElement.style['opacity'] = '1';
+};
+
+
+acgraph.vector.svg.Renderer.prototype.setTextPathProperties = function(element) {
+  var path = element.path();
+  /** @type {!acgraph.vector.svg.Defs} */
+  var defs = /** @type {!acgraph.vector.svg.Defs} */ (element.getStage().getDefs());
+  /** @type {Element} */
+
+  path.parent(defs);
+  path.render();
+  var pathElement = path.domElement();
+  this.appendChild(defs.domElement(), pathElement);
+
+
+  // var textPathDomElement = defs.getPathElement(path);
+  // var textPathDomElement = path.domElement();
+  var id = acgraph.utils.IdGenerator.getInstance().identify(pathElement, acgraph.utils.IdGenerator.ElementTypePrefix.PATH);
+  this.setIdInternal(pathElement, id);
+  // this.appendChild(defs.domElement(), textPathDomElement);
+
+  var pathPrefix = acgraph.getReference();
+  this.setAttributes_(element.textPath, {
+    'href': pathPrefix + '#' + id
+  });
 };
 
 

@@ -181,7 +181,9 @@ acgraph.vector.TextSegment.prototype.renderData = function() {
   if (this.text == '') return;
   this.domElement_ = acgraph.getRenderer().createTextSegmentElement();
   this.setTextSegmentProperties();
-  goog.dom.appendChild(this.parent_.domElement(), this.domElement_);
+
+  var targetDomElement = this.parent_.path() ? this.parent_.textPath : this.parent_.domElement();
+  goog.dom.appendChild(targetDomElement, this.domElement_);
 };
 
 
