@@ -770,6 +770,9 @@ acgraph.vector.Text.prototype.selectable = function(opt_value) {
 acgraph.vector.Text.prototype.path = function(opt_value) {
   if (goog.isDef(opt_value)) {
     this.path_ = opt_value;
+    if (this.getStage())
+      this.path_.parent(this.getStage().getDefs());
+    
     return this;
   }
   return this.path_;
@@ -1751,8 +1754,10 @@ acgraph.vector.Text.prototype.renderData = function() {
   if (this.domElement())
     goog.dom.removeChildren(this.domElement());
 
-  if (this.textPath)
+  if (this.textPath) {
+    goog.dom.removeChildren(this.textPath);
     goog.dom.appendChild(this.domElement(), this.textPath);
+  }
 
   for (var i = 0, len = this.segments_.length; i < len; i++) {
     this.segments_[i].renderData();

@@ -696,15 +696,16 @@ acgraph.vector.svg.Renderer.prototype.setTextData = function(element) {
 acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
   var style = element.style();
   var path = element.path();
-  var domElement = element.path() ? element.textPath : element.domElement();
+  var domElement = element.domElement();
   
   if (path) {
     /** @type {!acgraph.vector.svg.Defs} */
     var defs = /** @type {!acgraph.vector.svg.Defs} */ (element.getStage().getDefs());
     /** @type {Element} */
 
-    path.parent(null);
+    path.parent(defs);
     path.render();
+    path.clearDirtyState(acgraph.vector.Element.DirtyState.ALL);
     var pathElement = path.domElement();
     this.appendChild(defs.domElement(), pathElement);
 
@@ -817,35 +818,33 @@ acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
   else
     this.removeAttribute_(domElement, 'direction');
 
-  if (!path) {
-    if (style['hAlign']) {
-      var align;
+  if (style['hAlign'] && !path) {
+    var align;
 
-      if (style['direction'] == 'rtl') {
-        if (goog.userAgent.GECKO || goog.userAgent.IE) {
-          align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
-              acgraph.vector.Text.HAlign.START :
-              (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
-                  acgraph.vector.Text.HAlign.END :
-                  'middle';
-        } else {
-          align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
-              acgraph.vector.Text.HAlign.END :
-              (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
-                  acgraph.vector.Text.HAlign.START :
-                  'middle';
-        }
+    if (style['direction'] == 'rtl') {
+      if (goog.userAgent.GECKO || goog.userAgent.IE) {
+        align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+            acgraph.vector.Text.HAlign.START :
+            (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+                acgraph.vector.Text.HAlign.END :
+                'middle';
       } else {
-        align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+        align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
             acgraph.vector.Text.HAlign.END :
-            (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+            (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
                 acgraph.vector.Text.HAlign.START :
                 'middle';
       }
-      this.setAttribute_(domElement, 'text-anchor', /** @type {string} */ (align));
-    } else
-      this.removeAttribute_(domElement, 'text-anchor');
-  }
+    } else {
+      align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+          acgraph.vector.Text.HAlign.END :
+          (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+              acgraph.vector.Text.HAlign.START :
+              'middle';
+    }
+    this.setAttribute_(domElement, 'text-anchor', /** @type {string} */ (align));
+  } else
+    this.removeAttribute_(domElement, 'text-anchor');
 
   if (style['opacity'])
     domElement.style['opacity'] = style['opacity'];

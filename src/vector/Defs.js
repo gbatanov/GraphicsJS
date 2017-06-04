@@ -366,6 +366,8 @@ acgraph.vector.Defs.prototype.getStage = function() {
  */
 acgraph.vector.Defs.prototype.setDirtyState = function(value) {
   // this.needUpdateClip_();
+  this.dirty_ = true;
+  if (this.stage_) this.stage_.addClipForRender(this);
 };
 
 
