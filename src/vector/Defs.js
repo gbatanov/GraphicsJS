@@ -316,7 +316,6 @@ acgraph.vector.Defs.prototype.render = function() {
 acgraph.vector.Defs.prototype.addChild = function(child) {
   child.remove();
   child.setParent(this);
-  // this.needUpdateClip_();
   return this;
 };
 
@@ -330,7 +329,6 @@ acgraph.vector.Defs.prototype.removeChild = function(element) {
   var dom = element.domElement();
   if (dom)
     acgraph.getRenderer().removeNode(dom);
-  // this.needUpdateClip_();
   return element;
 };
 
@@ -347,9 +345,7 @@ acgraph.vector.Defs.prototype.getFullTransformation = function() {
 /**
  * @param {acgraph.vector.Element} child .
  */
-acgraph.vector.Defs.prototype.notifyRemoved = function(child) {
-
-};
+acgraph.vector.Defs.prototype.notifyRemoved = goog.nullFunction;
 
 
 /**

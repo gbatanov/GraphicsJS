@@ -697,7 +697,7 @@ acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
   var style = element.style();
   var path = element.path();
   var domElement = element.domElement();
-  
+
   if (path) {
     /** @type {!acgraph.vector.svg.Defs} */
     var defs = /** @type {!acgraph.vector.svg.Defs} */ (element.getStage().getDefs());

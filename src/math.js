@@ -223,7 +223,7 @@ acgraph.math.bezierCurveLength = function(params, opt_approxSteps) {
   var steps = opt_approxSteps || 100;
   var len = params.length;
   var order = len / 2 - 1;
-  var points = [];
+  var points = [], ret;
 
   for (var idx = 0, step = 2; idx < len; idx += step) {
     var point = {
@@ -278,7 +278,7 @@ acgraph.math.bezierCurveLength = function(params, opt_approxSteps) {
         c = mt * t2 * 3;
         d = t_ * t2;
       }
-      var ret = {
+      ret = {
         x: a * p[0].x + b * p[1].x + c * p[2].x + d * p[3].x,
         y: a * p[0].y + b * p[1].y + c * p[2].y + d * p[3].y
       };
