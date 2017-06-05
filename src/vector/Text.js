@@ -772,7 +772,16 @@ acgraph.vector.Text.prototype.path = function(opt_value) {
     this.path_ = opt_value;
     if (this.getStage())
       this.path_.parent(this.getStage().getDefs());
-    
+
+    var stageSuspended = !this.getStage() || this.getStage().isSuspended();
+    if (!stageSuspended) this.getStage().suspend();
+    this.defragmented = false;
+    this.setDirtyState(acgraph.vector.Element.DirtyState.STYLE);
+    this.setDirtyState(acgraph.vector.Element.DirtyState.DATA);
+    this.setDirtyState(acgraph.vector.Element.DirtyState.POSITION);
+    this.transformAfterChange();
+    if (!stageSuspended) this.getStage().resume();
+
     return this;
   }
   return this.path_;
@@ -1331,8 +1340,10 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
   // define segment offset, we need it to make textIndent for the first line.
   var shift = this.segments_.length == 0 ? this.textIndent_ : 0;
 
-  var isWidth = this.path() || goog.isDefAndNotNull(this.style_['width']);
-  var width = this.path() ? this.path().getLength() : this.width_;
+  var isWidthProp = goog.isDefAndNotNull(this.style_['width']);
+  var isWidth = this.path() || isWidthProp;
+  var widthProp = isWidthProp ? parseFloat(this.style_['width']) : Number.POSITIVE_INFINITY;
+  var width = this.path() ? Math.min(this.path().getLength(), widthProp) : this.width_;
 
   // If text width and wordWrap are set - start putting a segement into the given bounds.
   if (isWidth) {
