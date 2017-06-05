@@ -363,6 +363,8 @@ acgraph.vector.Defs.prototype.getStage = function() {
 <<<<<<< Updated upstream
 acgraph.vector.Defs.prototype.setDirtyState = function(value) {
   // this.needUpdateClip_();
+  this.dirty_ = true;
+  if (this.stage_) this.stage_.addClipForRender(this);
 };
 =======
 acgraph.vector.Defs.prototype.setDirtyState = goog.nullFunction;

@@ -695,13 +695,14 @@ acgraph.vector.svg.Renderer.prototype.setTextData = function(element) {
 /** @inheritDoc */
 acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
   var style = element.style();
+  var path = element.path();
   var domElement = element.domElement();
-<<<<<<< Updated upstream
-=======
 
   if (path) {
     /** @type {!acgraph.vector.svg.Defs} */
     var defs = /** @type {!acgraph.vector.svg.Defs} */ (element.getStage().getDefs());
+    /** @type {Element} */
+
     path.parent(defs);
     path.render();
     path.clearDirtyState(acgraph.vector.Element.DirtyState.ALL);
@@ -721,7 +722,6 @@ acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
     });
   }
 
->>>>>>> Stashed changes
 
   if (!element.selectable()) {
     domElement.style['-webkit-touch-callout'] = 'none';
@@ -818,7 +818,7 @@ acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
   else
     this.removeAttribute_(domElement, 'direction');
 
-  if (style['hAlign']) {
+  if (style['hAlign'] && !path) {
     var align;
 
     if (style['direction'] == 'rtl') {
@@ -853,41 +853,16 @@ acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
 };
 
 
-acgraph.vector.svg.Renderer.prototype.setTextPathProperties = function(element) {
-  var path = element.path();
-  /** @type {!acgraph.vector.svg.Defs} */
-  var defs = /** @type {!acgraph.vector.svg.Defs} */ (element.getStage().getDefs());
-  /** @type {Element} */
-
-  path.parent(defs);
-  path.render();
-  var pathElement = path.domElement();
-  this.appendChild(defs.domElement(), pathElement);
-
-
-  // var textPathDomElement = defs.getPathElement(path);
-  // var textPathDomElement = path.domElement();
-  var id = acgraph.utils.IdGenerator.getInstance().identify(pathElement, acgraph.utils.IdGenerator.ElementTypePrefix.PATH);
-  this.setIdInternal(pathElement, id);
-  // this.appendChild(defs.domElement(), textPathDomElement);
-
-  var pathPrefix = acgraph.getReference();
-  this.setAttributes_(element.textPath, {
-    'href': pathPrefix + '#' + id
-  });
-};
-
-
 /** @inheritDoc */
 acgraph.vector.svg.Renderer.prototype.setTextSegmentPosition = function(element) {
   var domElement = element.domElement();
   var text = element.parent();
-<<<<<<< Updated upstream
-=======
   var style = text.style();
   if (text.path()) {
-    var align = 'start';
+    align = 'start';
     if (style['hAlign']) {
+      var align;
+
       if (style['direction'] == 'rtl') {
         if (goog.userAgent.GECKO || goog.userAgent.IE) {
           align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
@@ -910,9 +885,13 @@ acgraph.vector.svg.Renderer.prototype.setTextSegmentPosition = function(element)
                 'middle';
       }
     }
->>>>>>> Stashed changes
 
-  if (element.firstInLine || element.dx) this.setAttribute_(domElement, 'x', text.calcX + element.dx);
+    var x = align == 'start' ? 0 : align == 'middle' ? text.path().getLength() / 2 - element.width / 2 : text.path().getLength() - element.width;
+    this.setAttribute_(domElement, 'x', x);
+  } else {
+    if (element.firstInLine || element.dx)
+      this.setAttribute_(domElement, 'x', text.calcX + element.dx);
+  }
   this.setAttribute_(domElement, 'dy', element.dy);
 };
 

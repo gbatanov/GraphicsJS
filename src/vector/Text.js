@@ -216,6 +216,8 @@ acgraph.vector.Text = function(opt_x, opt_y) {
 
   this.style_ = /** @type {acgraph.vector.TextStyle} **/ (this.defaultStyle_);
 
+  this.textPath = null;
+
   goog.base(this);
 };
 goog.inherits(acgraph.vector.Text, acgraph.vector.Element);
@@ -385,7 +387,8 @@ acgraph.vector.Text.prototype.SUPPORTED_DIRTY_STATES =
     acgraph.vector.Element.prototype.SUPPORTED_DIRTY_STATES |
         acgraph.vector.Element.DirtyState.DATA |
         acgraph.vector.Element.DirtyState.STYLE |
-        acgraph.vector.Element.DirtyState.POSITION;
+        acgraph.vector.Element.DirtyState.POSITION |
+        acgraph.vector.Element.DirtyState.CHILDREN;
 
 
 /**
@@ -767,6 +770,9 @@ acgraph.vector.Text.prototype.selectable = function(opt_value) {
 acgraph.vector.Text.prototype.path = function(opt_value) {
   if (goog.isDef(opt_value)) {
     this.path_ = opt_value;
+    if (this.getStage())
+      this.path_.parent(this.getStage().getDefs());
+    
     return this;
   }
   return this.path_;
@@ -1463,17 +1469,17 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
       if (firstSegment) {
         firstSegment.firstInLine = true;
         if (!this.currentLineEmpty_) {
-          if (this.accumulatedHeight_ && this.currentNumberSeqBreaks_ > 1)
+          if (this.accumulatedHeight_ && this.currentNumberSeqBreaks_ > 1) {
             firstSegment.dy = this.accumulatedHeight_;
-          else
+          } else {
             firstSegment.dy = this.currentDy_ + this.currentBaseLine_;
+          }
         }
       }
     } else {
       // in VML first line baseline is used to set Y for the text
       // baseLine of first segment is set as base line of the first line
       this.currentLine_[0].baseLine = this.currentBaseLine_;
-
       if (this.textIndent_ && this.style_['hAlign'] == acgraph.vector.Text.HAlign.CENTER) {
         this.currentLine_[0].dx = this.rtl ? -this.textIndent_ / 2 : this.textIndent_ / 2;
       }
@@ -1554,11 +1560,21 @@ acgraph.vector.Text.prototype.calculateX = function() {
  * @protected
  */
 acgraph.vector.Text.prototype.calculateY = function() {
-  this.calcY = this.y_ + (this.segments_.length == 0 ? 0 : this.segments_[0].baseLine);
-  // adjust text position depenedin on hAlign anchor.
-  if (this.style_['vAlign'] && this.realHeigth < this.style_['height']) {
-    if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.MIDDLE) this.calcY += this.height_ / 2 - this.realHeigth / 2;
-    else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.BOTTOM) this.calcY += this.height_ - this.realHeigth;
+  if (this.path()) {
+    if (this.style_['vAlign']) {
+      var firstSegment = this.segments_[0];
+      if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.MIDDLE)
+        firstSegment.dy += firstSegment.baseLine - this.realHeigth / 2;
+      else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.BOTTOM)
+        firstSegment.dy += firstSegment.baseLine - this.realHeigth;
+    }
+  } else {
+    this.calcY = this.y_ + (this.segments_.length == 0 ? 0 : this.segments_[0].baseLine);
+    // adjust text position depenedin on hAlign anchor.
+    if (this.style_['vAlign'] && this.realHeigth < this.style_['height']) {
+      if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.MIDDLE) this.calcY += this.height_ / 2 - this.realHeigth / 2;
+      else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.BOTTOM) this.calcY += this.height_ - this.realHeigth;
+    }
   }
 };
 
@@ -1678,6 +1694,9 @@ acgraph.vector.Text.prototype.renderInternal = function() {
   // if data is unsynced - update it
   if (!this.defragmented) this.textDefragmentation();
 
+  if (this.hasDirtyState(acgraph.vector.Element.DirtyState.CHILDREN))
+    this.renderTextPath();
+
   if (this.hasDirtyState(acgraph.vector.Element.DirtyState.STYLE))
     this.renderStyle();
 
@@ -1688,6 +1707,20 @@ acgraph.vector.Text.prototype.renderInternal = function() {
     this.renderPosition();
 
   goog.base(this, 'renderInternal');
+};
+
+
+/**
+ *
+ */
+acgraph.vector.Text.prototype.renderTextPath = function() {
+  if (this.path_ && !this.textPath) {
+    this.textPath = acgraph.getRenderer().createTextPathElement();
+  } else if (!this.path_) {
+    goog.dom.removeNode(this.textPath);
+    this.textPath = null;
+  }
+  this.clearDirtyState(acgraph.vector.Element.DirtyState.CHILDREN);
 };
 
 
@@ -1721,13 +1754,9 @@ acgraph.vector.Text.prototype.renderData = function() {
   if (this.domElement())
     goog.dom.removeChildren(this.domElement());
 
-  if (this.path_ && !this.textPath) {
-    this.textPath = acgraph.getRenderer().createTextPathElement();
-    acgraph.getRenderer().setTextPathProperties(this);
+  if (this.textPath) {
+    goog.dom.removeChildren(this.textPath);
     goog.dom.appendChild(this.domElement(), this.textPath);
-  } else {
-    goog.dom.removeNode(this.textPath);
-    this.textPath = null;
   }
 
   for (var i = 0, len = this.segments_.length; i < len; i++) {
