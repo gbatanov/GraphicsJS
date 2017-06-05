@@ -696,6 +696,32 @@ acgraph.vector.svg.Renderer.prototype.setTextData = function(element) {
 acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
   var style = element.style();
   var domElement = element.domElement();
+<<<<<<< Updated upstream
+=======
+
+  if (path) {
+    /** @type {!acgraph.vector.svg.Defs} */
+    var defs = /** @type {!acgraph.vector.svg.Defs} */ (element.getStage().getDefs());
+    path.parent(defs);
+    path.render();
+    path.clearDirtyState(acgraph.vector.Element.DirtyState.ALL);
+    var pathElement = path.domElement();
+    this.appendChild(defs.domElement(), pathElement);
+
+
+    // var textPathDomElement = defs.getPathElement(path);
+    // var textPathDomElement = path.domElement();
+    var id = acgraph.utils.IdGenerator.getInstance().identify(pathElement, acgraph.utils.IdGenerator.ElementTypePrefix.PATH);
+    this.setIdInternal(pathElement, id);
+    // this.appendChild(defs.domElement(), textPathDomElement);
+
+    var pathPrefix = acgraph.getReference();
+    this.setAttributes_(element.textPath, {
+      'href': pathPrefix + '#' + id
+    });
+  }
+
+>>>>>>> Stashed changes
 
   if (!element.selectable()) {
     domElement.style['-webkit-touch-callout'] = 'none';
@@ -856,6 +882,35 @@ acgraph.vector.svg.Renderer.prototype.setTextPathProperties = function(element) 
 acgraph.vector.svg.Renderer.prototype.setTextSegmentPosition = function(element) {
   var domElement = element.domElement();
   var text = element.parent();
+<<<<<<< Updated upstream
+=======
+  var style = text.style();
+  if (text.path()) {
+    var align = 'start';
+    if (style['hAlign']) {
+      if (style['direction'] == 'rtl') {
+        if (goog.userAgent.GECKO || goog.userAgent.IE) {
+          align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+              acgraph.vector.Text.HAlign.START :
+              (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+                  acgraph.vector.Text.HAlign.END :
+                  'middle';
+        } else {
+          align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+              acgraph.vector.Text.HAlign.END :
+              (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+                  acgraph.vector.Text.HAlign.START :
+                  'middle';
+        }
+      } else {
+        align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+            acgraph.vector.Text.HAlign.END :
+            (style['hAlign'] == acgraph.vector.Text.HAlign.START || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+                acgraph.vector.Text.HAlign.START :
+                'middle';
+      }
+    }
+>>>>>>> Stashed changes
 
   if (element.firstInLine || element.dx) this.setAttribute_(domElement, 'x', text.calcX + element.dx);
   this.setAttribute_(domElement, 'dy', element.dy);

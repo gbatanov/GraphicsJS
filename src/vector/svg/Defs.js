@@ -73,23 +73,6 @@ acgraph.vector.svg.Defs.prototype.getClipPathElement = function(clipShape) {
 };
 
 
-/**
- * Finds in the cache or creates an path element.
- * @param {!acgraph.vector.Path} path The path for which it is needed to get a DOM element.
- * @return {!Element} The DOM element describing the clipping.
- */
-acgraph.vector.svg.Defs.prototype.getPathElement = function(path) {
-  /** @type {string} */
-  var id = acgraph.utils.IdGenerator.getInstance().identify(path);
-
-  var res = this.paths_[id];
-  if (!res)
-    this.paths_[id] = res = path;
-
-  return res;
-};
-
-
 /** @inheritDoc */
 acgraph.vector.svg.Defs.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
