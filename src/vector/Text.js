@@ -1567,6 +1567,8 @@ acgraph.vector.Text.prototype.calculateY = function() {
         firstSegment.dy += firstSegment.baseLine - this.realHeigth / 2;
       else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.BOTTOM)
         firstSegment.dy += firstSegment.baseLine - this.realHeigth;
+      else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.TOP)
+        firstSegment.dy += firstSegment.baseLine;
     }
   } else {
     this.calcY = this.y_ + (this.segments_.length == 0 ? 0 : this.segments_[0].baseLine);
