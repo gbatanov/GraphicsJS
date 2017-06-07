@@ -106,7 +106,6 @@ acgraph.vector.Text = function(opt_x, opt_y) {
    */
   this.currentLineWidth_ = 0;
 
-
   /**
    * Width of line before current.
    * @type {number}
@@ -208,8 +207,8 @@ acgraph.vector.Text = function(opt_x, opt_y) {
     'fontFamily': goog.global['acgraph']['fontFamily'],
     'direction': goog.global['acgraph']['textDirection'],
     'textOverflow': acgraph.vector.Text.TextOverflow.CLIP,
-    'wordBreak': 'normal',
-    'wordWrap': 'normal',
+    'wordBreak': acgraph.vector.Text.WordBreak.NORMAL,
+    'wordWrap': acgraph.vector.Text.WordWrap.NORMAL,
     'selectable': true,
     'hAlign': acgraph.vector.Text.HAlign.START
   });
@@ -226,6 +225,42 @@ goog.inherits(acgraph.vector.Text, acgraph.vector.Element);
 //  Enums
 //
 //----------------------------------------------------------------------------------------------------------------------
+/**
+ * Text wrap mode.
+ * @enum {string}
+ */
+acgraph.vector.Text.WordBreak = {
+  /**
+   Break words according to their usual rules.
+   */
+  NORMAL: 'normal',
+  /**
+   Don't allow word breaks for CJK text.  Non-CJK text behavior is the same as for normal.
+   */
+  KEEP_ALL: 'keep-all',
+  /**
+   Word breaks may be inserted between any character.
+   */
+  BREAK_ALL: 'break-all'
+};
+
+
+/**
+ * Text wrap mode.
+ * @enum {string}
+ */
+acgraph.vector.Text.WordWrap = {
+  /**
+   Indicates that lines may only break at normal word break points.
+   */
+  NORMAL: 'normal',
+  /**
+   Indicates that normally unbreakable words may be broken at arbitrary points if there are no otherwise acceptable break points in the line.
+   */
+  BREAK_WORD: 'break-word'
+};
+
+
 /**
  * Defines visibility in block, of text can't be shown in the area.
  * @enum {string}
@@ -1087,9 +1122,9 @@ acgraph.vector.Text.prototype.cutTextSegment_ = function(text, style, a, b, segm
   bounds.width = cutTextWidth;
   acgraph.getRenderer().textBounds(cutText, resultStatus, bounds);
 
-  var isWWBreak = this.style_['wordWrap'] == 'break-word';
-  var isWBCJK = this.style_['wordBreak'] == 'keep-all';
-  var isWBBreak = this.style_['wordBreak'] == 'break-all';
+  var isWWBreak = this.style_['wordWrap'] == acgraph.vector.Text.WordWrap.BREAK_WORD;
+  var isWBCJK = this.style_['wordBreak'] == acgraph.vector.Text.WordBreak.KEEP_ALL;
+  var isWBBreak = this.style_['wordBreak'] == acgraph.vector.Text.WordBreak.BREAK_ALL;
 
   if (!isWBBreak && !opt_ignoreByWord) {
     var anyWhiteSpace = /\s+/g;
@@ -1334,19 +1369,8 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
 
       shift = 0;
 
-      // if (this.style_['wordWrap'] == 'break-word' ||
-      //     this.style_['wordWrap'] == 'normal') {
-        text = goog.string.trimLeft(text.substring(cutPos, text.length));
-        segment_bounds = this.getTextBounds(text, style);
-      // } else {
-      //   if (this.htmlOn_) {
-      //     text = '';
-      //     segment_bounds = this.getTextBounds(text, style);
-      //   } else {
-      //     this.applyTextOverflow_();
-      //     this.stopAddSegments_ = true;
-      //   }
-      // }
+      text = goog.string.trimLeft(text.substring(cutPos, text.length));
+      segment_bounds = this.getTextBounds(text, style);
     }
   }
 
@@ -1359,13 +1383,6 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
  * Finalizes text line.
  */
 acgraph.vector.Text.prototype.finalizeTextLine = function() {
-  var wordWrap = this.wordWrap();
-  if ((wordWrap == 'noWrap') &&
-      (this.textLines_.length == 1) &&
-      !this.htmlOn_ && !this.stopAddSegments_) {
-    this.applyTextOverflow_();
-    this.stopAddSegments_ = true;
-  }
   // if there is a flag to stop adding segements - stop it.
   // this can happen if width, heigth and textOverflow are set and text doesn't fit.
   if (this.stopAddSegments_ || this.currentLine_.length == 0) return;
@@ -1462,7 +1479,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
       }
     }
 
-    if (goog.isDefAndNotNull(this.style_['width']) && this.style_['wordWrap'] == 'normal' &&
+    if (goog.isDefAndNotNull(this.style_['width']) && this.style_['wordWrap'] == acgraph.vector.Text.WordWrap.NORMAL &&
         this.currentLineWidth_ > this.width_) {
       if (this.currentLine_.length > 1 && !this.currentLine_[0].text.length) {
         goog.array.removeAt(this.currentLine_, 0);
@@ -1791,6 +1808,11 @@ acgraph.vector.Text.prototype.disposeInternal = function() {
   proto['wordBreak'] = proto.wordBreak;
   proto['textOverflow'] = proto.textOverflow;
   proto['selectable'] = proto.selectable;
+  goog.exportSymbol('acgraph.vector.Text.WordBreak.NORMAL', acgraph.vector.Text.WordBreak.NORMAL);
+  goog.exportSymbol('acgraph.vector.Text.WordBreak.BREAK_ALL', acgraph.vector.Text.WordBreak.BREAK_ALL);
+  goog.exportSymbol('acgraph.vector.Text.WordBreak.KEEP_ALL', acgraph.vector.Text.WordBreak.KEEP_ALL);
+  goog.exportSymbol('acgraph.vector.Text.WordWrap.NORMAL', acgraph.vector.Text.WordWrap.NORMAL);
+  goog.exportSymbol('acgraph.vector.Text.WordWrap.BREAK_WORD', acgraph.vector.Text.WordWrap.BREAK_WORD);
   goog.exportSymbol('acgraph.vector.Text.TextOverflow.CLIP', acgraph.vector.Text.TextOverflow.CLIP);
   goog.exportSymbol('acgraph.vector.Text.TextOverflow.ELLIPSIS', acgraph.vector.Text.TextOverflow.ELLIPSIS);
   goog.exportSymbol('acgraph.vector.Text.FontStyle.ITALIC', acgraph.vector.Text.FontStyle.ITALIC);
