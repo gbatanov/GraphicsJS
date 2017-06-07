@@ -859,10 +859,8 @@ acgraph.vector.svg.Renderer.prototype.setTextSegmentPosition = function(element)
   var text = element.parent();
   var style = text.style();
   if (text.path()) {
-    align = 'start';
+    var align = 'start';
     if (style['hAlign']) {
-      var align;
-
       if (style['direction'] == 'rtl') {
         if (goog.userAgent.GECKO || goog.userAgent.IE) {
           align = (style['hAlign'] == acgraph.vector.Text.HAlign.END || style['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
