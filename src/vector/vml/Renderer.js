@@ -1398,8 +1398,8 @@ acgraph.vector.vml.Renderer.prototype.setTextProperties = function(element) {
     if (element.textOverflow() == '') goog.style.setStyle(domElement, 'text-overflow', 'clip');
     if (element.direction()) goog.style.setStyle(domElement, 'direction', /** @type {string} */ (element.direction()));
 
-    goog.style.setStyle(domElement, 'word-break', element.wordBreak());
-    goog.style.setStyle(domElement, 'word-wrap', element.wordWrap());
+    goog.style.setStyle(domElement, 'word-break', /** @type {string} */ (element.wordBreak()));
+    goog.style.setStyle(domElement, 'word-wrap', /** @type {string} */ (element.wordWrap()));
 
     //old behaviour
     // if (element.wordWrap() == 'byLetter' && element.width()) {
