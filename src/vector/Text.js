@@ -1741,7 +1741,7 @@ acgraph.vector.Text.prototype.renderInternal = function() {
 
 
 /**
- *
+ * Render text path.
  */
 acgraph.vector.Text.prototype.renderTextPath = function() {
   if (this.path_ && !this.textPath) {

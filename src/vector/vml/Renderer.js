@@ -1341,16 +1341,19 @@ acgraph.vector.vml.Renderer.prototype.setTextPosition = function(element) {
 
   var x, y;
   if (element.isComplex()) {
-    y = element.calcY;
-    if (element.getSegments().length)
-      y -= element.getSegments()[0].baseLine;
-    x = element.calcX;
-    this.setAttributes_(domElementStyle, {
-      'position': 'absolute',
-      'overflow': 'visible',
-      'left': this.toCssSize_(x),
-      'top': this.toCssSize_(y)
-    });
+    if (!element.path()) {
+      y = element.calcY;
+      if (element.getSegments().length)
+        y -= element.getSegments()[0].baseLine;
+      x = element.calcX;
+
+      this.setAttributes_(domElementStyle, {
+        'position': 'absolute',
+        'overflow': 'visible',
+        'left': this.toCssSize_(x),
+        'top': this.toCssSize_(y)
+      });
+    }
   } else {
     x = /** @type {number} */ (element.x());
     y = /** @type {number} */ (element.y());
@@ -1376,10 +1379,12 @@ acgraph.vector.vml.Renderer.prototype.setTextProperties = function(element) {
   var domElementStyle = domElement['style'];
   domElement.style.cssText = '';
   if (element.isComplex()) {
-    this.setAttributes_(domElementStyle, {
-      'width': this.toCssSize_(1),
-      'height': this.toCssSize_(1)
-    });
+    if (!element.path()) {
+      this.setAttributes_(domElementStyle, {
+        'width': this.toCssSize_(1),
+        'height': this.toCssSize_(1)
+      });
+    }
     domElement.innerHTML = '';
   } else {
     var text = element.getSimpleText();
@@ -1446,7 +1451,15 @@ acgraph.vector.vml.Renderer.prototype.setTextProperties = function(element) {
 /** @inheritDoc */
 acgraph.vector.vml.Renderer.prototype.setTextSegmentPosition = function(element) {
   var domElement = element.domElement();
-  var path =
+  var originalPath = element.parent().path();
+  if (originalPath) {
+    var textPath = acgraph.path();
+    textPath.deserialize(originalPath.serializePathArgs());
+    if (element.firstInLine)
+      textPath.translate(element.dx, element.dy);
+  }
+  var path = originalPath ?
+      this.getVmlPath_(textPath, true) :
       'm ' +
           this.toSizeCoord_(element.x) + ',' +
           this.toSizeCoord_(element.y) + ' l ' +
@@ -1508,6 +1521,8 @@ acgraph.vector.vml.Renderer.prototype.setTextSegmentProperties = function(elemen
   domElement.setAttribute('filled', 't');
   domElement.setAttribute('fillcolor', style['color']);
   domElement.setAttribute('stroked', 'f');
+
+  goog.dom.appendChild(textEntry.domElement(), domElement);
 };
 
 
@@ -1986,17 +2001,19 @@ acgraph.vector.vml.Renderer.prototype.setTextTransformation = function(element) 
 
   var x, y;
   if (element.isComplex()) {
-    y = element.calcY;
-    if (element.getSegments().length)
-      y -= element.getSegments()[0].baseLine;
-    x = element.calcX;
+    if (!element.path()) {
+      y = element.calcY;
+      if (element.getSegments().length)
+        y -= element.getSegments()[0].baseLine;
+      x = element.calcX;
 
-    this.setAttributes_(domElementStyle, {
-      'position': 'absolute',
-      'overflow': 'visible',
-      'left': this.toCssSize_(x + tx.getTranslateX()),
-      'top': this.toCssSize_(y + tx.getTranslateY())
-    });
+      this.setAttributes_(domElementStyle, {
+        'position': 'absolute',
+        'overflow': 'visible',
+        'left': this.toCssSize_(x + tx.getTranslateX()),
+        'top': this.toCssSize_(y + tx.getTranslateY())
+      });
+    }
 
     var changed = element.isScaleOrShearChanged();
     if (changed) {

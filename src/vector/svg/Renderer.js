@@ -937,6 +937,10 @@ acgraph.vector.svg.Renderer.prototype.setTextSegmentProperties = function(elemen
 
   if (style.decoration)
     this.setAttribute_(domElement, 'text-decoration', style.decoration);
+
+
+  var targetDomElement = element.parent().path() ? element.parent().textPath : element.parent().domElement();
+  goog.dom.appendChild(targetDomElement, domElement);
 };
 
 

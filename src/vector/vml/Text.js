@@ -154,9 +154,13 @@ acgraph.vector.vml.Text.prototype.render = function() {
 };
 
 
-/**
- * Applies text properties to its DOM element
- */
+/** @inheritDoc */
+acgraph.vector.vml.Text.prototype.renderTextPath = function() {
+  this.clearDirtyState(acgraph.vector.Element.DirtyState.CHILDREN);
+};
+
+
+/** @inheritDoc */
 acgraph.vector.vml.Text.prototype.renderPosition = function() {
   if (this.isComplex_) {
     goog.base(this, 'renderPosition');
