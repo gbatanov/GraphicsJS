@@ -985,6 +985,11 @@ acgraph.vector.Text.prototype.init_ = function() {
   this.currentLine_ = [];
   this.calcX = 0;
   this.calcY = 0;
+
+  var isWidthProp = goog.isDefAndNotNull(this.style_['width']);
+  this.isWidthSet = this.path() || isWidthProp;
+  var widthProp = isWidthProp ? parseFloat(this.style_['width']) : Number.POSITIVE_INFINITY;
+  this.textWidthLimit = this.path() ? Math.min(this.path().getLength(), widthProp) : this.width_;
 };
 
 
@@ -1238,13 +1243,13 @@ acgraph.vector.Text.prototype.applyTextOverflow_ = function(opt_line) {
   // Copy ellipsis to avoid overwriting this.ellipsis_ because "..." can be ".." (cut) when resize happened.
   var ellipsis = this.ellipsis_;
 
-  if (ellipsisBounds.width > this.width_) {
-    cutPos = this.cutTextSegment_(this.ellipsis_, peekSegment.getStyle(), 0, this.width_, ellipsisBounds, true);
+  if (ellipsisBounds.width > this.textWidthLimit) {
+    cutPos = this.cutTextSegment_(this.ellipsis_, peekSegment.getStyle(), 0, this.textWidthLimit, ellipsisBounds, true);
     ellipsis = this.ellipsis_.substring(0, cutPos);
   }
 
   var left = this.prevLineWidth_;
-  var right = this.width_;
+  var right = this.textWidthLimit;
 
   if (ellipsis == '') {
     index = goog.array.indexOf(this.segments_, peekSegment) + 1;
@@ -1267,7 +1272,7 @@ acgraph.vector.Text.prototype.applyTextOverflow_ = function(opt_line) {
       ellipsisBounds = this.getTextBounds(ellipsis, peekSegment.getStyle());
       segmentBounds = this.getTextBounds(peekSegment.text, peekSegment.getStyle());
 
-      if (left - segmentBounds.width + ellipsisBounds.width <= this.width_) {
+      if (left - segmentBounds.width + ellipsisBounds.width <= this.textWidthLimit) {
         segment = peekSegment;
       }
       left -= segmentBounds.width;
@@ -1304,8 +1309,8 @@ acgraph.vector.Text.prototype.applyTextOverflow_ = function(opt_line) {
       lastSegmentInline.x = segment.x;
       lastSegmentInline.y = segment.y;
 
-      if (segment_bounds.width + ellipsisBounds.width > this.width_) {
-        cutPos = this.cutTextSegment_(this.ellipsis_, peekSegment.getStyle(), segment_bounds.width, this.width_, ellipsisBounds, true);
+      if (segment_bounds.width + ellipsisBounds.width > this.textWidthLimit) {
+        cutPos = this.cutTextSegment_(this.ellipsis_, peekSegment.getStyle(), segment_bounds.width, this.textWidthLimit, ellipsisBounds, true);
         ellipsis = this.ellipsis_.substring(0, cutPos);
       }
       if (cutPos > 0) {
@@ -1375,19 +1380,14 @@ acgraph.vector.Text.prototype.addSegment = function(text, opt_style, opt_break) 
   // define segment offset, we need it to make textIndent for the first line.
   var shift = this.segments_.length == 0 ? this.textIndent_ : 0;
 
-  var isWidthProp = goog.isDefAndNotNull(this.style_['width']);
-  var isWidth = this.path() || isWidthProp;
-  var widthProp = isWidthProp ? parseFloat(this.style_['width']) : Number.POSITIVE_INFINITY;
-  var width = this.path() ? Math.min(this.path().getLength(), widthProp) : this.width_;
-
   // If text width and wordWrap are set - start putting a segement into the given bounds.
-  if (isWidth) {
+  if (this.isWidthSet) {
     // if a new segment, with all segment already in place and offsets, doesnt' fit:
     // cut characters.
 
-    while ((this.currentLineWidth_ + segment_bounds.width + shift > width) && !this.stopAddSegments_) {
+    while ((this.currentLineWidth_ + segment_bounds.width + shift > this.textWidthLimit) && !this.stopAddSegments_) {
       // calculate the position where to cut.
-      var cutPos = this.cutTextSegment_(text, style, shift + this.currentLineWidth_, width, segment_bounds);
+      var cutPos = this.cutTextSegment_(text, style, shift + this.currentLineWidth_, this.textWidthLimit, segment_bounds);
 
       if (cutPos < 1 && (this.currentLine_.length == 0)) cutPos = 1;
       if (cutPos != 0) {
@@ -1508,14 +1508,14 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
       // in VML first line baseline is used to set Y for the text
       // baseLine of first segment is set as base line of the first line
       this.currentLine_[0].baseLine = this.currentBaseLine_;
+      this.currentLine_[0].firstInLine = true;
       if (this.textIndent_ && this.style_['hAlign'] == acgraph.vector.Text.HAlign.CENTER) {
         this.currentLine_[0].dx = this.rtl ? -this.textIndent_ / 2 : this.textIndent_ / 2;
       }
     }
 
-    var width = this.path() ? this.path().getLength() : this.width_;
-    if ((goog.isDefAndNotNull(this.style_['width']) || this.path()) && this.style_['wordWrap'] == acgraph.vector.Text.WordWrap.NORMAL &&
-        this.currentLineWidth_ > width) {
+    if (this.isWidthSet && this.style_['wordWrap'] == acgraph.vector.Text.WordWrap.NORMAL &&
+        this.currentLineWidth_ > this.textWidthLimit) {
       if (this.currentLine_.length > 1 && !this.currentLine_[0].text.length) {
         goog.array.removeAt(this.currentLine_, 0);
         var index = goog.array.indexOf(this.segments_, this.currentLine_[0]);
@@ -1525,7 +1525,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
       segment = goog.array.peek(this.currentLine_);
       var segment_bounds = this.getTextBounds(segment.text, segment.getStyle());
 
-      var cutPos = this.cutTextSegment_(segment.text, segment.getStyle(), 0, width, segment_bounds, true);
+      var cutPos = this.cutTextSegment_(segment.text, segment.getStyle(), 0, this.textWidthLimit, segment_bounds, true);
       var cutText = segment.text.substring(0, cutPos);
       segment_bounds = this.getTextBounds(cutText, segment.getStyle());
       segment.text = cutText;
@@ -1535,11 +1535,35 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
       this.prevLineWidth_ = this.currentLineWidth_;
 
       this.applyTextOverflow_(this.currentLine_);
+    }
 
-      if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.CENTER) {
-        segment = this.currentLine_[0];
-        segment.dx = -width / 2 + this.currentLineWidth_ / 2;
+    if (this.path()) {
+      var align = 'start';
+      if (this.style_['hAlign']) {
+        if (this.style_['direction'] == 'rtl') {
+          if (goog.userAgent.GECKO || goog.userAgent.IE) {
+            align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+                acgraph.vector.Text.HAlign.START :
+                (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+                    acgraph.vector.Text.HAlign.END :
+                    'middle';
+          } else {
+            align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+                acgraph.vector.Text.HAlign.END :
+                (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+                    acgraph.vector.Text.HAlign.START :
+                    'middle';
+          }
+        } else {
+          align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+              acgraph.vector.Text.HAlign.END :
+              (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+                  acgraph.vector.Text.HAlign.START :
+                  'middle';
+        }
       }
+
+      this.currentLine_[0].dx = align == 'start' ? 0 : align == 'middle' ? this.path().getLength() / 2 - this.currentLineWidth_ / 2 : this.path().getLength() - this.currentLineWidth_;
     }
 
     // calculate real width and height of the text.
@@ -1575,10 +1599,10 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
 acgraph.vector.Text.prototype.calculateX = function() {
   this.calcX = this.x_;
   // adjust text position depenedin on hAlign anchor.
-  if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START) this.calcX += this.rtl ? this.width_ : 0;
-  else if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.CENTER) this.calcX += this.width_ / 2;
-  else if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END) this.calcX += this.rtl ? 0 : this.width_;
-  else if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) this.calcX += this.width_;
+  if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START) this.calcX += this.rtl ? this.textWidthLimit : 0;
+  else if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.CENTER) this.calcX += this.textWidthLimit / 2;
+  else if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END) this.calcX += this.rtl ? 0 : this.textWidthLimit;
+  else if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) this.calcX += this.textWidthLimit;
   //  else if (this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) this.calcX += 0;
 };
 
