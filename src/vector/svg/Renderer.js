@@ -174,9 +174,6 @@ acgraph.vector.svg.Renderer.prototype.createMeasurement = function() {
   goog.dom.appendChild(this.measurement_, this.mesurmentDef_);
   goog.dom.appendChild(goog.dom.getDocument().body, this.measurement_);
 
-  this.measurementTextByPath_ = this.createTextElement();
-  goog.dom.appendChild(this.measurement_, this.measurementTextByPath_);
-
   this.measurementLayerForBBox_ = this.createLayerElement();
   goog.dom.appendChild(this.measurement_, this.measurementLayerForBBox_);
 
@@ -261,14 +258,14 @@ acgraph.vector.svg.Renderer.prototype.measure = function(text, style) {
  * @return {acgraph.math.Rect}
  */
 acgraph.vector.svg.Renderer.prototype.measureTextDom = function(element) {
-  if (!this.measurement_) this.createMeasurement();
-
+  if (!this.measurement_)
+    this.createMeasurement();
   if (!element.defragmented)
     element.textDefragmentation();
 
   var parent, id;
-
   var path = element.path();
+
   if (!path.domElement()) {
     path.createDom(true);
   }
@@ -295,6 +292,7 @@ acgraph.vector.svg.Renderer.prototype.measureTextDom = function(element) {
   element.renderData();
   element.renderStyle();
   element.renderPosition();
+  element.renderTransformation();
 
   id = acgraph.utils.IdGenerator.getInstance().identify(path.domElement(), acgraph.utils.IdGenerator.ElementTypePrefix.PATH);
   var pathPrefix = acgraph.getReference();
@@ -920,14 +918,10 @@ acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
 acgraph.vector.svg.Renderer.prototype.setTextSegmentPosition = function(element) {
   var domElement = element.domElement();
   var text = element.parent();
-  if (text.path()) {
-    if (element.firstInLine || element.dx) {
-      this.setAttribute_(domElement, 'x', element.dx);
-    }
-  } else {
-    if (element.firstInLine || element.dx)
-      this.setAttribute_(domElement, 'x', text.calcX + element.dx);
-  }
+
+  if (element.firstInLine || element.dx)
+    this.setAttribute_(domElement, 'x', text.path() ? element.dx : text.calcX + element.dx);
+
   this.setAttribute_(domElement, 'dy', element.dy);
 };
 
@@ -975,7 +969,6 @@ acgraph.vector.svg.Renderer.prototype.setTextSegmentProperties = function(elemen
 
   if (style.decoration)
     this.setAttribute_(domElement, 'text-decoration', style.decoration);
-
 
   var targetDomElement = element.parent().path() ? element.parent().textPath : element.parent().domElement();
   goog.dom.appendChild(targetDomElement, domElement);

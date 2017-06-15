@@ -57,7 +57,7 @@ acgraph.vector.Text = function(opt_x, opt_y) {
    *
    * @type {number}
    */
-  this.realHeigth = 0;
+  this.realHeight = 0;
 
   /**
    *
@@ -814,6 +814,7 @@ acgraph.vector.Text.prototype.path = function(opt_value) {
     this.setDirtyState(acgraph.vector.Element.DirtyState.STYLE);
     this.setDirtyState(acgraph.vector.Element.DirtyState.DATA);
     this.setDirtyState(acgraph.vector.Element.DirtyState.POSITION);
+    this.setDirtyState(acgraph.vector.Element.DirtyState.CHILDREN);
     this.transformAfterChange();
     if (!stageSuspended) this.getStage().resume();
 
@@ -976,7 +977,7 @@ acgraph.vector.Text.prototype.init_ = function() {
   this.prevLineWidth_ = 0;
   this.currentDy_ = 0;
   this.realWidth = 0;
-  this.realHeigth = 0;
+  this.realHeight = 0;
   this.accumulatedHeight_ = 0;
   this.currentNumberSeqBreaks_ = 0;
   this.currentLineHeight_ = 0;
@@ -985,6 +986,7 @@ acgraph.vector.Text.prototype.init_ = function() {
   this.currentLine_ = [];
   this.calcX = 0;
   this.calcY = 0;
+  this.textByPathBoundsCache = null;
 
   var isWidthProp = goog.isDefAndNotNull(this.style_['width']);
   this.isWidthSet = this.path() || isWidthProp;
@@ -1026,7 +1028,16 @@ acgraph.vector.Text.prototype.getBoundsWithoutTransform = function() {
 /** @inheritDoc */
 acgraph.vector.Text.prototype.getBoundsWithTransform = function(transform) {
   if (!this.defragmented) this.textDefragmentation();
-  if (!transform) return this.bounds.clone();
+
+  if (!transform) {
+    if (this.path()) {
+      if (this.textByPathBoundsCache)
+        return this.textByPathBoundsCache.clone();
+      else
+        return this.textByPathBoundsCache = acgraph.getRenderer().measureTextDom(this);
+    }
+    return this.bounds.clone();
+  }
 
   var isSelfTransform = transform == this.getSelfTransformation();
   var isFullTransform = transform == this.getFullTransformation();
@@ -1036,8 +1047,11 @@ acgraph.vector.Text.prototype.getBoundsWithTransform = function(transform) {
   else if (this.absoluteBoundsCache && isFullTransform)
     return this.absoluteBoundsCache.clone();
   else {
+    var bounds = this.path() ?
+        this.textByPathBoundsCache ? this.textByPathBoundsCache : acgraph.getRenderer().measureTextDom(this) :
+        this.bounds.clone();
     /** @type {!goog.math.Rect} */
-    var rect = acgraph.math.getBoundsOfRectWithTransform(this.bounds.clone(), transform);
+    var rect = acgraph.math.getBoundsOfRectWithTransform(bounds, transform);
     if (isSelfTransform)
       this.boundsCache = rect.clone();
     if (isFullTransform)
@@ -1061,6 +1075,13 @@ acgraph.vector.Text.prototype.getOriginalBounds = function() {
     return measure;
   }
   return new goog.math.Rect(0, 0, 0, 0);
+};
+
+
+/** @inheritDoc */
+acgraph.vector.Text.prototype.dropBoundsCache = function() {
+  goog.base(this, 'dropBoundsCache');
+  this.textByPathBoundsCache = null;
 };
 
 
@@ -1111,6 +1132,26 @@ acgraph.vector.Text.prototype.mergeStyles_ = function(var_args) {
 acgraph.vector.Text.prototype.getTextBounds = function(text, segmentStyle) {
   var style = this.mergeStyles_(this.style_, segmentStyle);
   return acgraph.getRenderer().textBounds(text, style);
+};
+
+
+/**
+ * Returns actual text width.
+ * @return {number}
+ */
+acgraph.vector.Text.prototype.getTextWidth = function() {
+  if (!this.defragmented) this.textDefragmentation();
+  return this.realWidth;
+};
+
+
+/**
+ * Returns actual text height.
+ * @return {number}
+ */
+acgraph.vector.Text.prototype.getTextHeight = function() {
+  if (!this.defragmented) this.textDefragmentation();
+  return this.realHeight;
 };
 
 
@@ -1426,7 +1467,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
   // if textOverFlow (ellipsis) is set, height is set and integrated height + height of the line we finalize
   // is greater than height set - apply textOverflow.
   var endOfText = this.height_ &&
-      (this.realHeigth + this.currentLineHeight_ > this.height_) &&
+      (this.realHeight + this.currentLineHeight_ > this.height_) &&
       this.textLines_.length != 0;
 
   if (endOfText) {
@@ -1456,7 +1497,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
         for (i = 0, len = this.currentLine_.length; i < len; i++) {
           segment = this.currentLine_[i];
           segment.x = shift;
-          segment.y = this.realHeigth + this.currentBaseLine_ + segment.height - segment.baseLine * 1.5;
+          segment.y = this.realHeight + this.currentBaseLine_ + segment.height - segment.baseLine * 1.5;
           shift += segment.width;
         }
       } else if (middlePosition) {
@@ -1466,7 +1507,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
         for (i = 0, len = this.currentLine_.length; i < len; i++) {
           segment = this.currentLine_[i];
           segment.x = shift + segment.width / 2;
-          segment.y = this.realHeigth + this.currentBaseLine_ + segment.height - segment.baseLine * 1.5;
+          segment.y = this.realHeight + this.currentBaseLine_ + segment.height - segment.baseLine * 1.5;
           shift += segment.width;
         }
       } else if (endPosition) {
@@ -1477,7 +1518,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
         for (i = this.currentLine_.length - 1; i >= 0; i--) {
           segment = this.currentLine_[i];
           segment.x = shift;
-          segment.y = this.realHeigth + this.currentBaseLine_ + segment.height - segment.baseLine * 1.5;
+          segment.y = this.realHeight + this.currentBaseLine_ + segment.height - segment.baseLine * 1.5;
           shift -= segment.width;
         }
       }
@@ -1567,7 +1608,7 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
     }
 
     // calculate real width and height of the text.
-    this.realHeigth += this.currentLineHeight_;
+    this.realHeight += this.currentLineHeight_;
     this.realWidth = Math.max(this.realWidth, this.currentLineWidth_);
 
     // set Dy, which will be applied to the next line.
@@ -1616,18 +1657,18 @@ acgraph.vector.Text.prototype.calculateY = function() {
     if (this.style_['vAlign']) {
       var firstSegment = this.segments_[0];
       if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.MIDDLE)
-        firstSegment.dy += firstSegment.baseLine - this.realHeigth / 2;
+        firstSegment.dy += firstSegment.baseLine - this.realHeight / 2;
       else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.BOTTOM)
-        firstSegment.dy += firstSegment.baseLine - this.realHeigth;
+        firstSegment.dy += firstSegment.baseLine - this.realHeight;
       else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.TOP)
         firstSegment.dy += firstSegment.baseLine;
     }
   } else {
     this.calcY = this.y_ + (this.segments_.length == 0 ? 0 : this.segments_[0].baseLine);
     // adjust text position depenedin on hAlign anchor.
-    if (this.style_['vAlign'] && this.realHeigth < this.style_['height']) {
-      if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.MIDDLE) this.calcY += this.height_ / 2 - this.realHeigth / 2;
-      else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.BOTTOM) this.calcY += this.height_ - this.realHeigth;
+    if (this.style_['vAlign'] && this.realHeight < this.style_['height']) {
+      if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.MIDDLE) this.calcY += this.height_ / 2 - this.realHeight / 2;
+      else if (this.style_['vAlign'] == acgraph.vector.Text.VAlign.BOTTOM) this.calcY += this.height_ - this.realHeight;
     }
   }
 };
@@ -1716,7 +1757,7 @@ acgraph.vector.Text.prototype.textDefragmentation = function() {
 
   // set text width and height. they are either set or calculated.
   if (!this.style_['width']) this.width_ = this.realWidth;
-  if (!this.style_['height']) this.height_ = this.realHeigth;
+  if (!this.style_['height']) this.height_ = this.realHeight;
 
   this.calculateX();
   this.calculateY();
@@ -1897,6 +1938,8 @@ acgraph.vector.Text.prototype.disposeInternal = function() {
   proto['hAlign'] = proto.hAlign;
   proto['width'] = proto.width;
   proto['height'] = proto.height;
+  proto['getTextHeight'] = proto.getTextHeight;
+  proto['getTextWidth'] = proto.getTextWidth;
   proto['wordWrap'] = proto.wordWrap;
   proto['wordBreak'] = proto.wordBreak;
   proto['textOverflow'] = proto.textOverflow;

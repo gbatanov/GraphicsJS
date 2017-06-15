@@ -1358,9 +1358,9 @@ acgraph.vector.vml.Renderer.prototype.setTextPosition = function(element) {
     x = /** @type {number} */ (element.x());
     y = /** @type {number} */ (element.y());
 
-    if (element.vAlign() && element.height() && element.height() > element.realHeigth) {
-      if (element.vAlign() == acgraph.vector.Text.VAlign.MIDDLE) y += element.height() / 2 - element.realHeigth / 2;
-      if (element.vAlign() == acgraph.vector.Text.VAlign.BOTTOM) y += element.height() - element.realHeigth;
+    if (element.vAlign() && element.height() && element.height() > element.realHeight) {
+      if (element.vAlign() == acgraph.vector.Text.VAlign.MIDDLE) y += element.height() / 2 - element.realHeight / 2;
+      if (element.vAlign() == acgraph.vector.Text.VAlign.BOTTOM) y += element.height() - element.realHeight;
     }
 
     this.setAttributes_(domElementStyle, {
@@ -2062,9 +2062,9 @@ acgraph.vector.vml.Renderer.prototype.setTextTransformation = function(element) 
     x = element.x();
     y = element.y();
 
-    if (element.vAlign() && element.height() && element.height() > element.realHeigth) {
-      if (element.vAlign() == 'middle') y += element.height() / 2 - element.realHeigth / 2;
-      if (element.vAlign() == 'bottom') y += element.height() - element.realHeigth;
+    if (element.vAlign() && element.height() && element.height() > element.realHeight) {
+      if (element.vAlign() == 'middle') y += element.height() / 2 - element.realHeight / 2;
+      if (element.vAlign() == 'bottom') y += element.height() - element.realHeight;
     }
 
     this.setAttributes_(domElementStyle, {

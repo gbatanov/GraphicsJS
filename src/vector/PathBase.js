@@ -1031,28 +1031,30 @@ acgraph.vector.PathBase.boundsCalculationMap_ = (function() {
 acgraph.vector.PathBase.prototype.getLength = function() {
   var length = 0;
   if (this.isEmpty()) return length;
-  var prevSegment = null;
   /** @type {!Array.<string|number>} */
   var list = [];
   this.forEachSegment(function(segment, args) {
-    switch (segment) {
-      case acgraph.vector.PathBase.Segment.MOVETO:
-        acgraph.utils.partialApplyingArgsToFunction(Array.prototype.push, args, list);
-        break;
-      case acgraph.vector.PathBase.Segment.LINETO:
-        acgraph.utils.partialApplyingArgsToFunction(Array.prototype.push, args, list);
-        break;
-      case acgraph.vector.PathBase.Segment.CURVETO:
-        var params = goog.array.slice(list, list.length - 2);
-        for (var i = 0, len = args.length - 5; i < len; i += 6) {
-          Array.prototype.push.apply(params, goog.array.slice(args, i, i + 6));
-          length += acgraph.math.bezierCurveLength(params);
-          params = goog.array.slice(params, params.length - 2);
-        }
-        acgraph.utils.partialApplyingArgsToFunction(Array.prototype.push, args, list);
-        break;
+    if (segment != acgraph.vector.PathBase.Segment.MOVETO) {
+      var step;
+      var params = goog.array.slice(list, list.length - 2);
+      if (segment == acgraph.vector.PathBase.Segment.ARCTO) {
+        step = 6;
+        var cx = params[0] - goog.math.angleDx(args[2], args[0]);
+        var cy = params[1] - goog.math.angleDy(args[2], args[1]);
+        args = acgraph.math.arcToBezier(cx, cy, args[0], args[1], args[2], args[3]);
+      } else if (segment == acgraph.vector.PathBase.Segment.LINETO) {
+        step = 2;
+      } else if (segment == acgraph.vector.PathBase.Segment.CURVETO) {
+        step = 6;
+      }
+
+      for (var i = 0, len = args.length - (step - 1); i < len; i += step) {
+        Array.prototype.push.apply(params, goog.array.slice(args, i, i + step));
+        length += acgraph.math.bezierCurveLength(params);
+        params = goog.array.slice(params, params.length - 2);
+      }
     }
-    prevSegment = segment;
+    acgraph.utils.partialApplyingArgsToFunction(Array.prototype.push, args, list);
   });
 
   return length;
@@ -1153,3 +1155,10 @@ acgraph.vector.PathBase.prototype.clearInternal_ = function() {
   delete this.simple_;
   return this;
 };
+
+
+//exports
+(function() {
+  var proto = acgraph.vector.PathBase.prototype;
+  proto['getLength'] = proto.getLength;
+})();

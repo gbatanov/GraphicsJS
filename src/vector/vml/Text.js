@@ -204,7 +204,7 @@ acgraph.vector.vml.Text.prototype.getTextBounds = function(text, segmentStyle) {
     var bounds = acgraph.getRenderer().measuringSimpleText(text, segmentStyle, this.style());
     bounds.left = this.x();
     bounds.top = this.y();
-    this.realHeigth = bounds.height;
+    this.realHeight = bounds.height;
     if (this.height()) bounds.height = this.height();
     return bounds;
   }
