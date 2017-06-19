@@ -1453,20 +1453,20 @@ acgraph.vector.vml.Renderer.prototype.setTextSegmentPosition = function(element)
   var domElement = element.domElement();
   var originalPath = element.parent().path();
   if (originalPath) {
-    var textPath = acgraph.path();
+    var textPath = /** @type {acgraph.vector.Path} */(acgraph.path());
     textPath.deserialize(originalPath.serializePathArgs());
     if (element.firstInLine)
       textPath.translate(element.dx, element.dy);
-  }
-  var path = originalPath ?
-      this.getVmlPath_(textPath, true) :
-      'm ' +
-          this.toSizeCoord_(element.x) + ',' +
-          this.toSizeCoord_(element.y) + ' l ' +
-          (this.toSizeCoord_(element.x) + 1) + ',' +
-          this.toSizeCoord_(element.y) + ' e';
 
-  domElement.setAttribute('path', path);
+    var path = originalPath ?
+        this.getVmlPath_(textPath, true) :
+        'm ' +
+        this.toSizeCoord_(element.x) + ',' +
+        this.toSizeCoord_(element.y) + ' l ' +
+        (this.toSizeCoord_(element.x) + 1) + ',' +
+        this.toSizeCoord_(element.y) + ' e';
+    domElement.setAttribute('path', /** @type {string} */(path));
+  }
 };
 
 

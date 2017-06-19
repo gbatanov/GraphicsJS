@@ -1171,7 +1171,6 @@ acgraph.vector.Element.prototype.renderVisibility = function() {
 
 /**
  * Applies transformation to the DOM element.
- * @protected
  */
 acgraph.vector.Element.prototype.renderTransformation = function() {
   // Resolve transformation state

@@ -255,7 +255,7 @@ acgraph.vector.svg.Renderer.prototype.measure = function(text, style) {
 /**
  * Measure text element in dom.
  * @param {acgraph.vector.Text} element .
- * @return {acgraph.math.Rect}
+ * @return {goog.math.Rect}
  */
 acgraph.vector.svg.Renderer.prototype.measureTextDom = function(element) {
   if (!this.measurement_)
@@ -264,7 +264,7 @@ acgraph.vector.svg.Renderer.prototype.measureTextDom = function(element) {
     element.textDefragmentation();
 
   var parent, id;
-  var path = element.path();
+  var path = /** @type {acgraph.vector.Path} */(element.path());
 
   if (!path.domElement()) {
     path.createDom(true);
@@ -311,7 +311,7 @@ acgraph.vector.svg.Renderer.prototype.measureTextDom = function(element) {
 
   var bbox = element.domElement()['getBBox']();
 
-  return new acgraph.math.Rect(bbox.x, bbox.y, bbox.width, bbox.height);
+  return new goog.math.Rect(bbox.x, bbox.y, bbox.width, bbox.height);
 };
 
 
@@ -760,14 +760,12 @@ acgraph.vector.svg.Renderer.prototype.setTextData = function(element) {
 /** @inheritDoc */
 acgraph.vector.svg.Renderer.prototype.setTextProperties = function(element) {
   var style = element.style();
-  var path = element.path();
+  var path = /** @type {acgraph.vector.Path} */(element.path());
   var domElement = element.domElement();
 
   if (path && element.getStage()) {
-    /** @type {!acgraph.vector.svg.Defs} */
-    var defs = /** @type {!acgraph.vector.svg.Defs} */ (element.getStage().getDefs());
+    var defs = /** @type {!acgraph.vector.svg.Defs} */(element.getStage().getDefs());
 
-    /** @type {Element} */
     path.parent(defs);
     path.render();
     path.clearDirtyState(acgraph.vector.Element.DirtyState.ALL);

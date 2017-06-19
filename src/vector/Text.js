@@ -988,6 +988,31 @@ acgraph.vector.Text.prototype.init_ = function() {
   this.calcY = 0;
   this.textByPathBoundsCache = null;
 
+  this.align = 'start';
+  if (this.style_['hAlign']) {
+    if (this.style_['direction'] == 'rtl') {
+      if (goog.userAgent.GECKO || goog.userAgent.IE) {
+        this.align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+            acgraph.vector.Text.HAlign.START :
+            (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+                acgraph.vector.Text.HAlign.END :
+                'middle';
+      } else {
+        this.align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+            acgraph.vector.Text.HAlign.END :
+            (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+                acgraph.vector.Text.HAlign.START :
+                'middle';
+      }
+    } else {
+      this.align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
+          acgraph.vector.Text.HAlign.END :
+          (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
+              acgraph.vector.Text.HAlign.START :
+              'middle';
+    }
+  }
+
   var isWidthProp = goog.isDefAndNotNull(this.style_['width']);
   this.isWidthSet = this.path() || isWidthProp;
   var widthProp = isWidthProp ? parseFloat(this.style_['width']) : Number.POSITIVE_INFINITY;
@@ -1579,32 +1604,8 @@ acgraph.vector.Text.prototype.finalizeTextLine = function() {
     }
 
     if (this.path()) {
-      var align = 'start';
-      if (this.style_['hAlign']) {
-        if (this.style_['direction'] == 'rtl') {
-          if (goog.userAgent.GECKO || goog.userAgent.IE) {
-            align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
-                acgraph.vector.Text.HAlign.START :
-                (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
-                    acgraph.vector.Text.HAlign.END :
-                    'middle';
-          } else {
-            align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
-                acgraph.vector.Text.HAlign.END :
-                (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
-                    acgraph.vector.Text.HAlign.START :
-                    'middle';
-          }
-        } else {
-          align = (this.style_['hAlign'] == acgraph.vector.Text.HAlign.END || this.style_['hAlign'] == acgraph.vector.Text.HAlign.RIGHT) ?
-              acgraph.vector.Text.HAlign.END :
-              (this.style_['hAlign'] == acgraph.vector.Text.HAlign.START || this.style_['hAlign'] == acgraph.vector.Text.HAlign.LEFT) ?
-                  acgraph.vector.Text.HAlign.START :
-                  'middle';
-        }
-      }
-
-      this.currentLine_[0].dx = align == 'start' ? 0 : align == 'middle' ? this.path().getLength() / 2 - this.currentLineWidth_ / 2 : this.path().getLength() - this.currentLineWidth_;
+      this.currentLine_[0].dx = this.align == 'start' ? 0 : this.align == 'middle' ?
+          this.path().getLength() / 2 - this.currentLineWidth_ / 2 : this.path().getLength() - this.currentLineWidth_;
     }
 
     // calculate real width and height of the text.
