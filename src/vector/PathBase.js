@@ -1156,9 +1156,3 @@ acgraph.vector.PathBase.prototype.clearInternal_ = function() {
   return this;
 };
 
-
-//exports
-(function() {
-  var proto = acgraph.vector.PathBase.prototype;
-  proto['getLength'] = proto.getLength;
-})();
