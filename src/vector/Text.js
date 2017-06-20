@@ -1122,7 +1122,7 @@ acgraph.vector.Text.prototype.cutTextSegment_ = function(text, style, a, b, segm
   bounds.width = cutTextWidth;
   acgraph.getRenderer().textBounds(cutText, resultStatus, bounds);
 
-  var isWWBreak = this.style_['wordWrap'] == acgraph.vector.Text.WordWrap.BREAK_WORD;
+  var isWWBreak = this.style_['wordWrap'] != acgraph.vector.Text.WordWrap.NORMAL;
   var isWBCJK = this.style_['wordBreak'] == acgraph.vector.Text.WordBreak.KEEP_ALL;
   var isWBBreak = this.style_['wordBreak'] == acgraph.vector.Text.WordBreak.BREAK_ALL;
 
